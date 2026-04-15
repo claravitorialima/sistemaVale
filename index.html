@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SistemaRail - Inteligência Ferroviária</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+        :root {
+            --primary-blue: #0A84FF;
+            --accent-blue: #004080;
+            --dark-bg: #030406;
+            --card-bg: rgba(15, 18, 25, 0.85);
+            --card-border: #1a202c;
+            --danger: #FF3B30;
+            --warning: #FF9F0A;
+            --success: #30D158;
+            --text-main: #F2F2F7;
+            --text-muted: #8E8E93;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-main);
+            margin: 0;
+            background: radial-gradient(circle at top center, #0b1320 0%, #030406 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            width: 95%;
+            max-width: 1200px;
+            border: 1px solid var(--card-border);
+            border-top: 4px solid var(--primary-blue);
+            margin: 40px auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .header-title {
+            text-align: center;
+            color: var(--text-main);
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            font-size: 28px;
+        }
+
+        .header-sub {
+            text-align: center;
+            color: var(--primary-blue);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 35px;
+            font-weight: 600;
+        }
+
+        /* TELA DE BOAS VINDAS / KPI */
+        .home-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .kpi-card {
+            background: rgba(10, 14, 20, 0.7);
+            padding: 30px;
+            border-radius: 14px;
+            text-align: center;
+            border: 1px solid var(--card-border);
+            transition: 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 20px rgba(10, 132, 255, 0.1);
+        }
+
+        .kpi-value {
+            font-size: 52px;
+            font-weight: 800;
+            color: var(--primary-blue);
+            display: block;
+            margin: 10px 0;
+            text-shadow: 0 0 15px rgba(10, 132, 255, 0.3);
+        }
+
+        .kpi-label {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+        }
+
+        /* MENU INICIAL */
+        .main-menu {
+            display: flex;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .menu-btn {
+            flex: 1;
+            padding: 22px;
+            border-radius: 12px;
+            border: 1px solid var(--primary-blue);
+            background: linear-gradient(45deg, rgba(10,132,255,0.05), transparent);
+            color: var(--text-main);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-btn:hover {
+            background: var(--primary-blue);
+            color: #fff;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(10, 132, 255, 0.3);
+        }
+
+        /* LISTA E CARDS */
+        .wagon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .wagon-card {
+            background: rgba(10, 14, 20, 0.8);
+            border-radius: 14px;
+            padding: 25px;
+            border: 1px solid var(--card-border);
+        }
+
+        .wagon-card h3 {
+            margin-top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-main);
+            font-size: 20px;
+        }
+        
+        .badge {
+            font-size: 11px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.05);
+            font-weight: bold;
+        }
+
+        /* MODAL 3D */
+        #modal-3d {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 3, 5, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #canvas-3d-container {
+            width: 90%;
+            height: 55%;
+            background: radial-gradient(circle at center, #0a0d14 0%, #020304 100%);
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        .btn-action {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: 0.2s;
+        }
+
+        .btn-action:hover {
+            background: #147dec;
+            box-shadow: 0 0 15px rgba(10,132,255,0.4);
+        }
+
+        input {
+            padding: 14px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            border-radius: 6px;
+            width: 100%;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            transition: 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+
+        .vagon-entry {
+            background: rgba(10, 14, 20, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 40px;
+            gap: 12px;
+            border: 1px solid var(--card-border);
+        }
+        
+        .diagnostic-panel {
+            background: rgba(10, 13, 18, 0.85);
+            padding: 25px;
+            width: 90%;
+            border-radius: 14px;
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            border: 1px solid var(--card-border);
+            box-sizing: border-box;
+        }
+        
+        .diag-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .diag-item span {
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        .diag-item strong {
+            font-size: 18px;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="screen-home" class="container">
+        <div style="display:flex; justify-content:center; align-items:center; gap: 15px; margin-bottom: 10px;">
+            <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="var(--primary-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            <h1 class="header-title" style="margin:0;">SYSTEM<span style="font-weight:300;">RAIL</span></h1>
+        </div>
+        <div class="header-sub">Gerenciamento Avançado de Ativos</div>
+
+        <div class="home-grid">
+            <div class="kpi-card">
+                <span class="kpi-label">Disponibilidade Física (DF)</span>
+                <span class="kpi-value" id="kpi-df">100%</span>
+                <p style="font-size: 12px; color: var(--text-muted); margin:0;">Frota operacional vs Total instalada</p>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">Ativos Monitorados</span>
+                <span class="kpi-value" id="kpi-total">0</span>
+                <p style="font-size: 12px; color: var(--text-muted); margin:0;">Unidades ativas e sensoriadas</p>
+            </div>
+        </div>
+
+        <div class="main-menu">
+            <button class="menu-btn" onclick="showScreen('setup')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:8px; display:block; margin:0 auto 10px;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                INICIALIZAR SENSORES
+            </button>
+            <button class="menu-btn" onclick="checkMonitorAccess()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:8px; display:block; margin:0 auto 10px;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                PAINEL OPERACIONAL
+            </button>
+        </div>
+    </div>
+
+    <div id="screen-setup" class="container hidden">
+        <button onclick="showScreen('home')" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-weight:600; display:flex; align-items:center; gap:5px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg> VOLTAR
+        </button>
+        <h2 style="color: var(--text-main); margin-top:25px; margin-bottom: 25px;">Sincronização de Frota</h2>
+        <input type="text" id="op-matricula" placeholder="Código do Operador / Inspetor">
+        
+        <!-- QR CODE SECTION -->
+        <div id="qr-reader" style="width:100%; display:none; margin-top: 20px; background:#fff; color:#000; padding:10px; border-radius:12px;"></div>
+        <button id="btn-qr" onclick="startQRScanner()" style="background:var(--card-bg); border:1px solid var(--primary-blue); color:var(--primary-blue); width:100%; padding:14px; cursor:pointer; margin-top:20px; border-radius: 8px; font-weight:bold; display:flex; justify-content:center; align-items:center; gap:8px; box-shadow: 0 0 15px rgba(10,132,255,0.1);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            LER QR CODE DA UNIDADE
+        </button>
+
+        <div id="vagon-list" style="margin-top: 25px;"></div>
+        <button onclick="addVagonInput()"
+            style="background:none; color:var(--text-muted); border:1px dashed #334; width:100%; padding:14px; cursor:pointer; margin-bottom:20px; border-radius: 8px; font-weight:600;">
+            + ADICIONAR ATIVO MANUALMENTE</button>
+        <button class="btn-action" onclick="iniciarMonitoramento()">APLICAR CONFIGURAÇÃO</button>
+    </div>
+
+    <div id="screen-monitor" class="container hidden">
+        <header style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--card-border); padding-bottom: 20px;">
+            <button onclick="showScreen('home')" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-weight:600; font-size:13px;">
+                < MENU PRINCIPAL</button>
+            <div style="font-weight:800; color:var(--primary-blue); letter-spacing:2px; font-size:18px;">SYSTEM RAIL</div>
+        </header>
+        
+        <div style="display:flex; justify-content:space-between; margin-top:20px; align-items:center; background:rgba(0,0,0,0.4); padding:15px; border-radius:8px; border:1px solid var(--card-border);">
+            <div style="font-size:12px; color:var(--text-muted);"><strong style="color:#fff;">STATUS REDE:</strong> ONLINE <span style="color:var(--success);">●</span></div>
+            <div style="font-size:12px; color:var(--text-muted);"><strong style="color:#fff;">PING TELEMETRIA:</strong> 12ms</div>
+            <div style="font-size:12px; color:var(--text-muted);"><strong style="color:#fff;">SINC:</strong> TEMPO REAL</div>
+        </div>
+
+        <div id="wagon-grid" class="wagon-grid"></div>
+        
+        <button class="btn-action" style="background:none; border:1px solid var(--primary-blue); color:var(--primary-blue); margin-top:30px;" onclick="evoluirFrota()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right:5px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> SIMULAR DESGASTE OPERACIONAL (FALHAS E VAZAMENTOS)
+        </button>
+    </div>
+
+    <div id="modal-3d" class="hidden">
+        <h2 id="modal-title" style="color:var(--text-main); margin-bottom: 5px; font-weight:800; letter-spacing:1px; text-transform:uppercase;">GÊMEO DIGITAL OTIMIZADO</h2>
+        <h3 id="modal-wagon-id" style="color:var(--primary-blue); margin-top: 0; font-weight: 600; font-size:14px; letter-spacing:2px;">ATIVO VGN: --</h3>
+        <div id="canvas-3d-container"></div>
+        
+        <div class="diagnostic-panel">
+            <div class="diag-item">
+                <span>Vibração RMS</span>
+                <strong id="diag-g">--</strong>
+            </div>
+            <div class="diag-item">
+                <span>Temperatura Eixo</span>
+                <strong id="diag-temp">--</strong>
+            </div>
+            <div class="diag-item">
+                <span>Vazamento Graxa</span>
+                <strong id="diag-grease">--</strong>
+            </div>
+            <div class="diag-item">
+                <span>Condição Geral</span>
+                <strong id="diag-status">--</strong>
+            </div>
+        </div>
+        <button class="btn-action" style="width:100%; max-width:400px; background:rgba(255,255,255,0.05); color:#fff; border:1px solid var(--card-border);" onclick="fechar3D()">FECHAR DIAGNÓSTICO</button>
+    </div>
+
+    <script>
+        let frota = [];
+        let scene, camera, renderer, wagonGroup;
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.container').forEach(c => c.classList.add('hidden'));
+            document.getElementById('screen-' + screenId).classList.remove('hidden');
+            updateKPIs();
+        }
+
+        function addVagonInput() {
+            const container = document.getElementById('vagon-list');
+            const div = document.createElement('div');
+            div.className = 'vagon-entry';
+            div.innerHTML = `
+                <input type="text" placeholder="ID (ex: 201)" class="v-id">
+                <input type="number" placeholder="Km" class="v-km">
+                <input type="number" placeholder="Tara/Peso (t)" class="v-carga">
+                <button onclick="this.parentElement.remove()" style="color:var(--danger); background:none; border:none; cursor:pointer;" title="Remover"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            `;
+            container.appendChild(div);
+        }
+        addVagonInput();
+
+        function updateKPIs() {
+            const total = frota.length;
+            const criticos = frota.filter(v => v.desgaste > 75).length;
+            const df = total === 0 ? 100 : Math.round(((total - criticos) / total) * 100);
+
+            document.getElementById('kpi-total').innerText = total;
+            document.getElementById('kpi-df').innerText = df + "%";
+            document.getElementById('kpi-df').style.color = df < 70 ? 'var(--danger)' : (df < 90 ? 'var(--warning)' : 'var(--primary-blue)');
+        }
+
+        function checkMonitorAccess() {
+            if (frota.length === 0) alert("Nenhuma unidade sensoriada. Primeiro inicialize os módulos no menu de configuração.");
+            else showScreen('monitor');
+        }
+
+        function iniciarMonitoramento() {
+            const entries = document.querySelectorAll('.vagon-entry');
+            frota = Array.from(entries).map(e => {
+                const km = parseFloat(e.querySelector('.v-km').value) || 0;
+                const carga = parseFloat(e.querySelector('.v-carga').value) || 0;
+                return {
+                    id: e.querySelector('.v-id').value,
+                    km: km, carga: carga,
+                    desgaste: Math.min(Math.round((km / 120000) * 60 + (carga / 130) * 30), 100)
+                };
+            }).filter(v => v.id);
+            showScreen('home');
+        }
+
+        function renderizarCards() {
+            const grid = document.getElementById('wagon-grid');
+            grid.innerHTML = '';
+            frota.forEach((v, i) => {
+                let color = v.desgaste > 75 ? 'var(--danger)' : (v.desgaste > 45 ? 'var(--warning)' : 'var(--success)');
+                
+                // Cálculo preciso de graxa vazada com base no desgaste e no peso(carga) suportado
+                // Considerando máximo de até ~400g a 500g crítico
+                let greaseLeak = ((v.desgaste/100) * (v.carga/100) * 150).toFixed(0); 
+                if(v.desgaste < 20) greaseLeak = 0; // novo não vaza
+                v.greaseValue = greaseLeak;
+
+                grid.innerHTML += `
+                    <div class="wagon-card">
+                        <h3>VGN-${v.id} <span class="badge" style="border:1px solid ${color}; color:${color};">${v.desgaste > 75 ? 'CRÍTICO' : 'NORMAL'}</span></h3>
+                        <p style="font-size:13px; margin:8px 0; color:var(--text-muted);"><b style="color:#fff;">ODO:</b> ${v.km.toLocaleString()} KM | <b style="color:#fff;">PESO:</b> ${v.carga} ton</p>
+                        <p style="font-size:13px; margin:8px 0; color:var(--text-muted);"><b style="color:#fff;">EFICIÊNCIA MECÂNICA:</b> <strong style="color:${color}">${100 - v.desgaste}%</strong></p>
+                        <button class="btn-action" style="padding:12px; font-size:12px;" onclick="abrir3D(${i})">ABRIR TELEMETRIA 3D</button>
+                    </div>
+                `;
+            });
+        }
+
+        // --- LÓGICA 3D REALISTA DE ROLAMENTO E VAZAMENTO DE GRAXA ---
+        function createBearing(desgaste, greaseLeakAmt) {
+            const group = new THREE.Group();
+            
+            // Cores baseadas no desgaste simulando aço polido vs oxidado
+            const baseColor = 0xb0b5bd; // Prateado aço real
+            const wearColor = desgaste > 75 ? 0x884a36 : (desgaste > 45 ? 0x938870 : baseColor);
+            const roughnessLevel = desgaste > 75 ? 0.7 : 0.25;
+            const metalnessLevel = desgaste > 75 ? 0.5 : 0.95;
+
+            // Função Extrude para Aneis perfeitamente alinhados
+            function createRing(innerRadius, outerRadius, depth, ringColor) {
+                const shape = new THREE.Shape();
+                shape.absarc(0, 0, outerRadius, 0, Math.PI * 2, false);
+                const holePath = new THREE.Path();
+                holePath.absarc(0, 0, innerRadius, 0, Math.PI * 2, true);
+                shape.holes.push(holePath);
+
+                const extrudeSettings = { 
+                    depth: depth, 
+                    bevelEnabled: true, 
+                    bevelSegments: 4, 
+                    steps: 1, 
+                    bevelSize: 0.15, 
+                    bevelThickness: 0.15, 
+                    curveSegments: 64 
+                };
+                const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+                geometry.center(); 
+                
+                const material = new THREE.MeshStandardMaterial({
+                    color: ringColor,
+                    metalness: metalnessLevel,
+                    roughness: roughnessLevel
+                });
+                return new THREE.Mesh(geometry, material);
+            }
+
+            // Anel Externo (Outer Ring fixo na carcaça)
+            const outerRing = createRing(13, 16, 7.5, wearColor);
+            
+            // Anel Interno (Inner Ring que acopla no eixo)
+            const innerRing = createRing(7, 9.5, 7.5, 0x9ca3af);
+            
+            group.add(outerRing);
+            group.add(innerRing);
+
+            // Gaiola (Cage) e roletes alinhados estilo TBU Real
+            const numRollers = 18;
+            const rollersGroup = new THREE.Group();
+            
+            // Elemento Rolante Cilíndrico
+            const rollerGeometry = new THREE.CylinderGeometry(1.6, 1.6, 7, 32);
+            
+            // Hastes circulares simulando a gaiola de retenção
+            const cageMat = new THREE.MeshStandardMaterial({color: 0x333333, metalness:0.4, roughness:0.7});
+            const cageTop = new THREE.Mesh(new THREE.TorusGeometry(11.25, 0.35, 16, 100), cageMat);
+            cageTop.position.z = 3.6;
+            const cageBot = new THREE.Mesh(new THREE.TorusGeometry(11.25, 0.35, 16, 100), cageMat);
+            cageBot.position.z = -3.6;
+            rollersGroup.add(cageTop);
+            rollersGroup.add(cageBot);
+
+            const rollerMaterial = new THREE.MeshStandardMaterial({
+                color: desgaste > 75 ? 0x9c4a30 : 0xe2e8f0, // Escurece / oxida com desgaste
+                metalness: 0.9,
+                roughness: desgaste > 75 ? 0.5 : 0.1
+            });
+
+            for(let i=0; i<numRollers; i++) {
+                const angle = (i / numRollers) * Math.PI * 2;
+                const wrapper = new THREE.Group();
+                
+                // Raio médio do rolamento de pista = 11.25
+                wrapper.position.set(Math.cos(angle) * 11.25, Math.sin(angle) * 11.25, 0);
+                
+                // Alinha Container apontando p/ o eixo central para giro contínuo
+                wrapper.rotation.z = angle;
+                
+                const rollerMesh = new THREE.Mesh(rollerGeometry, rollerMaterial);
+                // Tombando o cilindro padrão (Eixo Y) para ocupar o Eixo Z e servir de pista
+                rollerMesh.rotation.x = Math.PI / 2; 
+                
+                wrapper.add(rollerMesh);
+                rollersGroup.add(wrapper);
+            }
+            
+            group.add(rollersGroup);
+
+            // GEOMETRIA REALISTA DA GRAXA VAZANDO
+            const greaseGroup = new THREE.Group();
+            if (greaseLeakAmt > 0) {
+                // Quanto + graxa vaza, + bulbos escuros
+                const blobs = Math.min(Math.floor(greaseLeakAmt / 3), 50); 
+                const greaseGeo = new THREE.SphereGeometry(1, 16, 16);
+                const greaseMat = new THREE.MeshStandardMaterial({
+                    color: 0x010201, // Graxa suja quase preta
+                    roughness: 0.1,  // Brilhante, lubrificada
+                    metalness: 0.2
+                });
+                
+                for(let b=0; b < blobs; b++) {
+                    const blob = new THREE.Mesh(greaseGeo, greaseMat);
+                    // Concentra blobs gravitacionalmente na parte de baixo do rolamento escorrendo (-Y)
+                    const lowerAngle = (Math.random() * Math.PI) + Math.PI; 
+                    const radius = 10 + (Math.random() * 6);
+                    blob.position.set(Math.cos(lowerAngle) * radius, Math.sin(lowerAngle) * radius, (Math.random()-0.5)*13);
+                    
+                    // Escala ovalada e imperfeita pro fluxo de graxa espessa
+                    blob.scale.set(0.6 + Math.random()*1.5, 0.6 + Math.random()*1.5, 0.3 + Math.random());
+                    greaseGroup.add(blob);
+                }
+            }
+            group.add(greaseGroup);
+
+            // Guarda referências para animar na main loop
+            group.userData.rollersContainer = rollersGroup;
+            group.userData.innerRing = innerRing;
+            group.userData.grease = greaseGroup;
+
+            // Inclinação isométrica visual tech
+            group.rotation.x = -Math.PI / 5;
+            group.rotation.y = Math.PI / 4;
+
+            return group;
+        }
+
+        function initThree(desgaste, greaseLeakAmt) {
+            const container = document.getElementById('canvas-3d-container');
+            container.innerHTML = '';
+            scene = new THREE.Scene();
+            
+            // Fundo escuro premium p/ contrastar aço
+            scene.background = new THREE.Color(0x06080b);
+
+            camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            wagonGroup = createBearing(desgaste, greaseLeakAmt);
+            scene.add(wagonGroup);
+
+            // Reflexos e Luzes de Estúdio Corporativas High-End
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            dirLight.position.set(20, 20, 30);
+            scene.add(dirLight);
+
+            // Luz Azul primária
+            const blueLight = new THREE.PointLight(0x0a84ff, 2.5, 80); 
+            blueLight.position.set(-20, 10, 20);
+            scene.add(blueLight);
+            
+            // Luz de Alerta ou contra-luz suave
+            const alertLight = new THREE.PointLight(desgaste > 75 ? 0xff3b30 : 0xaaaaaa, desgaste > 75 ? 2.5 : 0.8, 60); 
+            alertLight.position.set(15, -15, -20);
+            scene.add(alertLight);
+
+            camera.position.set(0, 0, 48);
+            camera.lookAt(0, 0, 0);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                if (wagonGroup) {
+                    // O anel externo pode ficar fixo ou ter o movimento natural do eixo.
+                    const innerSpeed = 0.04;
+                    wagonGroup.userData.innerRing.rotation.z += innerSpeed;
+                    
+                    // A gaiola dos roletes de um trem gira c/ metáde da rotação p/ redução elíptica
+                    const cageSpeed = innerSpeed / 2;
+                    wagonGroup.userData.rollersContainer.rotation.z += cageSpeed;
+                    
+                    // Cada rolete rola perfeitamente no seu eixo Y e órbita Z!
+                    wagonGroup.userData.rollersContainer.children.forEach(wrapper => {
+                        // wrapper é Group. Filho idx 0 é o Mesh do cilindro.
+                        if(wrapper.children.length > 0) {
+                            const mesh = wrapper.children[0];
+                            // Giro no próprio eixo Y do cilindro alinhado fisicamente.
+                            mesh.rotateY(-innerSpeed * 1.5); 
+                        }
+                    });
+
+                    // Graxa escorrendo frame by frame sutilmente
+                    if (wagonGroup.userData.grease && wagonGroup.userData.grease.children) {
+                        wagonGroup.userData.grease.children.forEach(blob => {
+                            blob.position.y -= 0.005; // Gotejamento lento pesado
+                            if(blob.position.y < -16) blob.position.y = -6; // Reinicia pra simular vazamento contínuo
+                        });
+                    }
+                    
+                    // Vibração mecânica no gráfico sinalizando fadiga alta
+                    if (desgaste > 75) {
+                        wagonGroup.position.x = (Math.random() - 0.5) * 0.3;
+                        wagonGroup.position.y = (Math.random() - 0.5) * 0.3;
+                    } else {
+                        wagonGroup.position.x = 0;
+                        wagonGroup.position.y = 0;
+                    }
+                }
+
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        function abrir3D(index) {
+            const v = frota[index];
+            document.getElementById('modal-3d').classList.remove('hidden');
+            
+            document.getElementById('modal-wagon-id').innerText = "ATIVO CONECTADO: VGN-" + v.id;
+            
+            document.getElementById('diag-g').innerText = (v.desgaste * 0.08).toFixed(1) + " G";
+            document.getElementById('diag-temp').innerText = (25 + v.desgaste * 0.8).toFixed(1) + " °C";
+            document.getElementById('diag-grease').innerText = v.greaseValue + "g Vol.";
+            document.getElementById('diag-status').innerText = v.desgaste > 75 ? "FALHA / CRÍTICO" : "NORMATÍVO";
+            
+            // Highlight color
+            document.getElementById('diag-status').style.color = v.desgaste > 75 ? "var(--danger)" : "var(--success)";
+
+            initThree(v.desgaste, v.greaseValue);
+        }
+
+        function fechar3D() { 
+            document.getElementById('modal-3d').classList.add('hidden'); 
+            const container = document.getElementById('canvas-3d-container');
+            container.innerHTML = '';
+        }
+
+        // --- LÓGICA QR CODE SCANNER AVANÇADA ---
+        let html5QrcodeScanner;
+
+        function startQRScanner() {
+            const qrReader = document.getElementById('qr-reader');
+            qrReader.style.display = 'block';
+            
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5QrcodeScanner(
+                    "qr-reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+            }
+                
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            try {
+                let data = JSON.parse(decodedText);
+                addQRVagon(data.id || ("Q" + Math.floor(Math.random()*1000)), data.km || 0, data.carga || 0);
+            } catch(e) {
+                addQRVagon(decodedText, Math.floor(Math.random()*50000), 100);
+            }
+            
+            html5QrcodeScanner.clear();
+            document.getElementById('qr-reader').style.display = 'none';
+        }
+
+        function onScanFailure(error) {}
+
+        function addQRVagon(id, km, carga) {
+            const container = document.getElementById('vagon-list');
+            const div = document.createElement('div');
+            div.className = 'vagon-entry';
+            div.innerHTML = `
+                <input type="text" placeholder="ID" class="v-id" value="${id}">
+                <input type="number" placeholder="Km" class="v-km" value="${km}">
+                <input type="number" placeholder="Peso" class="v-carga" value="${carga}">
+                <button onclick="this.parentElement.remove()" style="color:var(--danger); background:none; border:none; cursor:pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            `;
+            container.appendChild(div);
+            alert("Ativo VGN-" + id + " sincronizado primariamente por Telemetria Óptica (QR)!");
+        }
+
+        function evoluirFrota() {
+            frota.forEach(v => v.desgaste = Math.min(v.desgaste + 20, 100));
+            renderizarCards();
+            updateKPIs();
+        }
+
+        updateKPIs();
+    </script>
+</body>
+</html>
